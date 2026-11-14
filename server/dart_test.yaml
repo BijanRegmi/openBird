@@ -1,0 +1,2 @@
+# Test files share one database (TEST_DATABASE_URL), so run them one at a time.
+concurrency: 1

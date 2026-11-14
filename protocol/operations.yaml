@@ -1,0 +1,566 @@
+# Every operation of the pinned protocol and how this server handles it.
+#   implemented  - served with Shorebird's semantics
+#   stub         - answers with an empty/neutral result so CLI commands degrade cleanly
+#   unsupported  - 501 with an ErrorResponse naming the reason
+# test/protocol_coverage_test.dart fails when the pinned spec or client routes
+# contain an operation missing here, or an implemented one is not routed.
+operations:
+  - id: getCurrentUser
+    method: GET
+    path: /users/me
+    source: openapi
+    status: implemented
+  - id: updateCurrentUser
+    method: PATCH
+    path: /users/me
+    source: openapi
+    status: implemented
+  - id: deleteCurrentUser
+    method: DELETE
+    path: /users/me
+    source: openapi
+    status: unsupported
+    reason: account deletion is done by an operator
+  - id: getNotificationPreferences
+    method: GET
+    path: /users/me/notification_preferences
+    source: openapi
+    status: stub
+    reason: no email notifications; reports disabled
+  - id: updateNotificationPreferences
+    method: PATCH
+    path: /users/me/notification_preferences
+    source: openapi
+    status: stub
+    reason: accepted and ignored
+  - id: getReceivedInvitations
+    method: GET
+    path: /invitations
+    source: openapi
+    status: implemented
+  - id: getInvitation
+    method: GET
+    path: /invitations/{invitationId}
+    source: openapi
+    status: implemented
+  - id: acceptInvitation
+    method: POST
+    path: /invitations/{invitationId}/accept
+    source: openapi
+    status: implemented
+  - id: declineInvitation
+    method: POST
+    path: /invitations/{invitationId}/decline
+    source: openapi
+    status: implemented
+  - id: getPlan
+    method: GET
+    path: /plan
+    source: openapi
+    status: implemented
+  - id: getUsage
+    method: GET
+    path: /usage
+    source: openapi
+    status: implemented
+  - id: getApps
+    method: GET
+    path: /apps
+    source: openapi
+    status: implemented
+  - id: createApp
+    method: POST
+    path: /apps
+    source: openapi
+    status: implemented
+  - id: getApp
+    method: GET
+    path: /apps/{appId}
+    source: openapi
+    status: implemented
+  - id: deleteApp
+    method: DELETE
+    path: /apps/{appId}
+    source: openapi
+    status: implemented
+  - id: updateApp
+    method: PATCH
+    path: /apps/{appId}
+    source: openapi
+    status: implemented
+  - id: getAppSigningKey
+    method: GET
+    path: /apps/{appId}/signing-key
+    source: openapi
+    status: implemented
+  - id: createAppCollaborator
+    method: POST
+    path: /apps/{appId}/collaborators
+    source: openapi
+    status: unsupported
+    reason: per-app roles come later; org roles apply
+  - id: getAppCollaborators
+    method: GET
+    path: /apps/{appId}/collaborators
+    source: openapi
+    status: stub
+    reason: org members only; empty list
+  - id: updateAppCollaborator
+    method: PATCH
+    path: /apps/{appId}/collaborators/{collaboratorId}
+    source: openapi
+    status: unsupported
+    reason: per-app roles come later; org roles apply
+  - id: deleteAppCollaborator
+    method: DELETE
+    path: /apps/{appId}/collaborators/{collaboratorId}
+    source: openapi
+    status: unsupported
+    reason: per-app roles come later; org roles apply
+  - id: getChannels
+    method: GET
+    path: /apps/{appId}/channels
+    source: openapi
+    status: implemented
+  - id: createChannel
+    method: POST
+    path: /apps/{appId}/channels
+    source: openapi
+    status: implemented
+  - id: getReleases
+    method: GET
+    path: /apps/{appId}/releases
+    source: openapi
+    status: implemented
+  - id: createRelease
+    method: POST
+    path: /apps/{appId}/releases
+    source: openapi
+    status: implemented
+  - id: getRelease
+    method: GET
+    path: /apps/{appId}/releases/{releaseId}
+    source: openapi
+    status: implemented
+  - id: updateRelease
+    method: PATCH
+    path: /apps/{appId}/releases/{releaseId}
+    source: openapi
+    status: implemented
+  - id: deleteRelease
+    method: DELETE
+    path: /apps/{appId}/releases/{releaseId}
+    source: openapi
+    status: implemented
+  - id: getReleaseArtifacts
+    method: GET
+    path: /apps/{appId}/releases/{releaseId}/artifacts
+    source: openapi
+    status: implemented
+  - id: createReleaseArtifact
+    method: POST
+    path: /apps/{appId}/releases/{releaseId}/artifacts
+    source: openapi
+    status: implemented
+  - id: deleteReleaseArtifacts
+    method: DELETE
+    path: /apps/{appId}/releases/{releaseId}/artifacts
+    source: openapi
+    status: implemented
+  - id: getReleasePatches
+    method: GET
+    path: /apps/{appId}/releases/{releaseId}/patches
+    source: openapi
+    status: implemented
+  - id: updatePatch
+    method: PATCH
+    path: /apps/{appId}/releases/{releaseId}/patches/{patchId}
+    source: openapi
+    status: implemented
+  - id: createPatch
+    method: POST
+    path: /apps/{appId}/patches
+    source: openapi
+    status: implemented
+  - id: createBuildRun
+    method: POST
+    path: /apps/{appId}/runs
+    source: openapi
+    status: implemented
+  - id: createPatchArtifact
+    method: POST
+    path: /apps/{appId}/patches/{patchId}/artifacts
+    source: openapi
+    status: implemented
+  - id: promotePatch
+    method: POST
+    path: /apps/{appId}/patches/promote
+    source: openapi
+    status: implemented
+  - id: getAppInvitations
+    method: GET
+    path: /apps/{appId}/invitations
+    source: openapi
+    status: stub
+    reason: no invitations yet; empty list
+  - id: createAppInvitation
+    method: POST
+    path: /apps/{appId}/invitations
+    source: openapi
+    status: unsupported
+    reason: per-app roles come later; org roles apply
+  - id: revokeAppInvitation
+    method: DELETE
+    path: /apps/{appId}/invitations/{invitationId}
+    source: openapi
+    status: unsupported
+    reason: per-app roles come later; org roles apply
+  - id: deleteChannel
+    method: DELETE
+    path: /apps/{appId}/channels/{channelId}
+    source: openapi
+    status: implemented
+  - id: rollbackPatch
+    method: POST
+    path: /apps/{appId}/releases/{releaseId}/patches/{patchId}/rollback
+    source: openapi
+    status: implemented
+  - id: rollforwardPatch
+    method: POST
+    path: /apps/{appId}/releases/{releaseId}/patches/{patchId}/rollforward
+    source: openapi
+    status: implemented
+  - id: getVersionDistribution
+    method: GET
+    path: /apps/{appId}/metrics/version-distribution
+    source: openapi
+    status: implemented
+  - id: getNewDevices
+    method: GET
+    path: /apps/{appId}/metrics/new-devices
+    source: openapi
+    status: implemented
+  - id: getPatchAdoption
+    method: GET
+    path: /apps/{appId}/metrics/patch-adoption
+    source: openapi
+    status: implemented
+  - id: getActiveHours
+    method: GET
+    path: /apps/{appId}/metrics/active-hours
+    source: openapi
+    status: implemented
+  - id: getActivityHeatmap
+    method: GET
+    path: /apps/{appId}/metrics/activity-heatmap
+    source: openapi
+    status: implemented
+  - id: getUniqueUsers
+    method: GET
+    path: /apps/{appId}/metrics/unique-users
+    source: openapi
+    status: implemented
+  - id: getAppPatchInstalls
+    method: GET
+    path: /apps/{appId}/metrics/patch-installs
+    source: openapi
+    status: implemented
+  - id: getAppPatchDownloads
+    method: GET
+    path: /apps/{appId}/metrics/patch-downloads
+    source: openapi
+    status: implemented
+  - id: getReleasePatchInstalls
+    method: GET
+    path: /apps/{appId}/releases/{releaseId}/metrics/patch-installs
+    source: openapi
+    status: implemented
+  - id: getReleasePatchDownloads
+    method: GET
+    path: /apps/{appId}/releases/{releaseId}/metrics/patch-downloads
+    source: openapi
+    status: implemented
+  - id: patchCheck
+    method: POST
+    path: /patches/check
+    source: openapi
+    status: implemented
+  - id: getOrganizationMemberships
+    method: GET
+    path: /organizations
+    source: openapi
+    status: implemented
+  - id: createOrganization
+    method: POST
+    path: /organizations
+    source: openapi
+    status: implemented
+  - id: getOrganizationApps
+    method: GET
+    path: /organizations/{organizationId}/apps
+    source: openapi
+    status: implemented
+  - id: transferOrganizationApp
+    method: POST
+    path: /organizations/{organizationId}/apps
+    source: openapi
+    status: unsupported
+    reason: team management comes later
+  - id: getOrganizationUsers
+    method: GET
+    path: /organizations/{organizationId}/users
+    source: openapi
+    status: implemented
+  - id: getOrganization
+    method: GET
+    path: /organizations/{organizationId}
+    source: openapi
+    status: implemented
+  - id: updateOrganization
+    method: PATCH
+    path: /organizations/{organizationId}
+    source: openapi
+    status: implemented
+  - id: deleteOrganization
+    method: DELETE
+    path: /organizations/{organizationId}
+    source: openapi
+    status: unsupported
+    reason: team management comes later
+  - id: updateOrganizationUser
+    method: PATCH
+    path: /organizations/{organizationId}/users/{userId}
+    source: openapi
+    status: implemented
+  - id: deleteOrganizationUser
+    method: DELETE
+    path: /organizations/{organizationId}/users/{userId}
+    source: openapi
+    status: implemented
+  - id: getOrganizationInvitations
+    method: GET
+    path: /organizations/{organizationId}/invitations
+    source: openapi
+    status: implemented
+  - id: createOrganizationInvitation
+    method: POST
+    path: /organizations/{organizationId}/invitations
+    source: openapi
+    status: implemented
+  - id: revokeOrganizationInvitation
+    method: DELETE
+    path: /organizations/{organizationId}/invitations/{invitationId}
+    source: openapi
+    status: implemented
+  - id: getOrganizationPlan
+    method: GET
+    path: /organizations/{organizationId}/plan
+    source: openapi
+    status: implemented
+  - id: getOrganizationUsage
+    method: GET
+    path: /organizations/{organizationId}/usage
+    source: openapi
+    status: implemented
+  - id: getOrganizationAuditLogs
+    method: GET
+    path: /organizations/{organizationId}/audit-logs
+    source: openapi
+    status: stub
+    reason: no audit log yet; empty page
+  - id: getAppStoreConnectCredential
+    method: GET
+    path: /organizations/{organizationId}/app-store-connect-credential
+    source: openapi
+    status: unsupported
+    reason: stores ASC credentials for Shorebird-hosted features; not applicable
+  - id: putAppStoreConnectCredential
+    method: PUT
+    path: /organizations/{organizationId}/app-store-connect-credential
+    source: openapi
+    status: unsupported
+    reason: stores ASC credentials for Shorebird-hosted features; not applicable
+  - id: deleteAppStoreConnectCredential
+    method: DELETE
+    path: /organizations/{organizationId}/app-store-connect-credential
+    source: openapi
+    status: unsupported
+    reason: stores ASC credentials for Shorebird-hosted features; not applicable
+  - id: getServiceAccounts
+    method: GET
+    path: /organizations/{organizationId}/service-accounts
+    source: openapi
+    status: unsupported
+    reason: API keys come from bin/admin.dart for now
+  - id: createServiceAccount
+    method: POST
+    path: /organizations/{organizationId}/service-accounts
+    source: openapi
+    status: unsupported
+    reason: API keys come from bin/admin.dart for now
+  - id: updateServiceAccount
+    method: PATCH
+    path: /organizations/{organizationId}/service-accounts/{serviceAccountId}
+    source: openapi
+    status: unsupported
+    reason: API keys come from bin/admin.dart for now
+  - id: deleteServiceAccount
+    method: DELETE
+    path: /organizations/{organizationId}/service-accounts/{serviceAccountId}
+    source: openapi
+    status: unsupported
+    reason: API keys come from bin/admin.dart for now
+  - id: getServiceAccountKeys
+    method: GET
+    path: /organizations/{organizationId}/service-accounts/{serviceAccountId}/keys
+    source: openapi
+    status: unsupported
+    reason: API keys come from bin/admin.dart for now
+  - id: createServiceAccountKey
+    method: POST
+    path: /organizations/{organizationId}/service-accounts/{serviceAccountId}/keys
+    source: openapi
+    status: unsupported
+    reason: API keys come from bin/admin.dart for now
+  - id: revokeServiceAccountKey
+    method: DELETE
+    path: /organizations/{organizationId}/service-accounts/{serviceAccountId}/keys/{keyId}
+    source: openapi
+    status: unsupported
+    reason: API keys come from bin/admin.dart for now
+  - id: getServiceAccountTrustRules
+    method: GET
+    path: /organizations/{organizationId}/service-accounts/{serviceAccountId}/trust-rules
+    source: openapi
+    status: unsupported
+    reason: API keys come from bin/admin.dart for now
+  - id: createServiceAccountTrustRule
+    method: POST
+    path: /organizations/{organizationId}/service-accounts/{serviceAccountId}/trust-rules
+    source: openapi
+    status: unsupported
+    reason: API keys come from bin/admin.dart for now
+  - id: deleteServiceAccountTrustRule
+    method: DELETE
+    path: /organizations/{organizationId}/service-accounts/{serviceAccountId}/trust-rules/{ruleId}
+    source: openapi
+    status: unsupported
+    reason: API keys come from bin/admin.dart for now
+  - id: getGcpUploadSpeedTestUrl
+    method: GET
+    path: /diagnostics/gcp_upload
+    source: openapi
+    status: unsupported
+    reason: GCP upload/download speed tests against Shorebird infrastructure
+  - id: getGcpDownloadSpeedTestUrl
+    method: GET
+    path: /diagnostics/gcp_download
+    source: openapi
+    status: unsupported
+    reason: GCP upload/download speed tests against Shorebird infrastructure
+  - id: getEnterprises
+    method: GET
+    path: /enterprises
+    source: openapi
+    status: unsupported
+    reason: Shorebird enterprise accounts; not applicable
+  - id: getEnterprise
+    method: GET
+    path: /enterprises/{enterpriseId}
+    source: openapi
+    status: unsupported
+    reason: Shorebird enterprise accounts; not applicable
+  - id: getEnterpriseOrganizations
+    method: GET
+    path: /enterprises/{enterpriseId}/organizations
+    source: openapi
+    status: unsupported
+    reason: Shorebird enterprise accounts; not applicable
+  - id: getEnterpriseOrganizationMembers
+    method: GET
+    path: /enterprises/{enterpriseId}/organizations/{organizationId}/members
+    source: openapi
+    status: unsupported
+    reason: Shorebird enterprise accounts; not applicable
+  - id: addEnterpriseOrganizationMember
+    method: POST
+    path: /enterprises/{enterpriseId}/organizations/{organizationId}/members
+    source: openapi
+    status: unsupported
+    reason: Shorebird enterprise accounts; not applicable
+  - id: setEnterpriseOrganizationMemberRole
+    method: PATCH
+    path: /enterprises/{enterpriseId}/organizations/{organizationId}/members/{userId}
+    source: openapi
+    status: unsupported
+    reason: Shorebird enterprise accounts; not applicable
+  - id: removeEnterpriseOrganizationMember
+    method: DELETE
+    path: /enterprises/{enterpriseId}/organizations/{organizationId}/members/{userId}
+    source: openapi
+    status: unsupported
+    reason: Shorebird enterprise accounts; not applicable
+  - id: getEnterpriseBilling
+    method: GET
+    path: /enterprises/{enterpriseId}/billing
+    source: openapi
+    status: unsupported
+    reason: Shorebird enterprise accounts; not applicable
+  - id: getEnterpriseBillingOrganizations
+    method: GET
+    path: /enterprises/{enterpriseId}/billing/organizations
+    source: openapi
+    status: unsupported
+    reason: Shorebird enterprise accounts; not applicable
+  - id: getEnterpriseMembers
+    method: GET
+    path: /enterprises/{enterpriseId}/members
+    source: openapi
+    status: unsupported
+    reason: Shorebird enterprise accounts; not applicable
+  - id: setEnterpriseMemberRole
+    method: PATCH
+    path: /enterprises/{enterpriseId}/members/{userId}
+    source: openapi
+    status: unsupported
+    reason: Shorebird enterprise accounts; not applicable
+  - id: removeEnterpriseMember
+    method: DELETE
+    path: /enterprises/{enterpriseId}/members/{userId}
+    source: openapi
+    status: unsupported
+    reason: Shorebird enterprise accounts; not applicable
+  - id: getEnterpriseGuests
+    method: GET
+    path: /enterprises/{enterpriseId}/guests
+    source: openapi
+    status: unsupported
+    reason: Shorebird enterprise accounts; not applicable
+  - id: getEnterpriseServiceAccounts
+    method: GET
+    path: /enterprises/{enterpriseId}/service-accounts
+    source: openapi
+    status: unsupported
+    reason: Shorebird enterprise accounts; not applicable
+  - id: getEnterpriseApps
+    method: GET
+    path: /enterprises/{enterpriseId}/apps
+    source: openapi
+    status: unsupported
+    reason: Shorebird enterprise accounts; not applicable
+  - id: getEnterpriseAuditLogs
+    method: GET
+    path: /enterprises/{enterpriseId}/audit-logs
+    source: openapi
+    status: unsupported
+    reason: Shorebird enterprise accounts; not applicable
+  - id: setPatchRollout
+    method: PUT
+    path: /apps/{appId}/releases/{releaseId}/patches/{patchId}/rollout
+    source: client
+    status: implemented
+  - id: createPatchEvent
+    method: POST
+    path: /patches/events
+    source: updater
+    status: implemented

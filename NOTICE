@@ -1,0 +1,14 @@
+openBird
+Copyright 2026 The openBird Authors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+It includes, unmodified, files from the Shorebird project
+(https://github.com/shorebirdtech/shorebird and
+https://github.com/shorebirdtech/updater), Copyright The Shorebird Authors,
+licensed under either the MIT license or the Apache License, Version 2.0, and
+used here under the Apache License, Version 2.0. See protocol/README.md.
+
+openBird is an independent project. It is not affiliated with, endorsed by,
+or sponsored by Shorebird. "Shorebird" is a trademark of its owner and is
+used here only to describe compatibility.

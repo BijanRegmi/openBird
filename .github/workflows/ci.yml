@@ -1,0 +1,55 @@
+name: ci
+on:
+  push:
+  pull_request:
+
+jobs:
+  server:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: openbird
+          POSTGRES_PASSWORD: openbird
+          POSTGRES_DB: openbird_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U openbird" --health-interval 2s --health-retries 30
+    defaults:
+      run:
+        working-directory: server
+    env:
+      TEST_DATABASE_URL: postgres://openbird:openbird@localhost:5432/openbird_test?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: "3.10.0"
+      - run: dart pub get
+      - run: dart format --output=none --set-exit-if-changed lib bin test
+      - run: dart analyze --fatal-infos
+      - run: dart test
+
+  console:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dashboard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.0"
+      - run: bun install --frozen-lockfile
+      # The console's API types must match the pinned protocol.
+      - run: bun run gen:api && git diff --exit-code src/api/schema.ts
+      - run: bun run typecheck
+      - run: bun run build
+
+  image:
+    runs-on: ubuntu-latest
+    needs: [server, console]
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t openbird:ci .

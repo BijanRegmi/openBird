@@ -1,0 +1,40 @@
+# Weekly: compare the pinned Shorebird protocol with the latest CLI release.
+# Fails (and opens an issue) when they differ, so pin bumps happen
+# deliberately and in small steps.
+name: protocol-drift
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Latest Shorebird release
+        id: latest
+        run: |
+          v=$(git ls-remote --tags https://github.com/shorebirdtech/shorebird.git 'refs/tags/v*' \
+            | sed -n 's#.*refs/tags/v\([0-9.]*\)$#\1#p' | sort -V | tail -1)
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+      - name: Drift report
+        id: report
+        run: |
+          pip install pyyaml >/dev/null
+          set +e
+          tool/sync_protocol.sh "${{ steps.latest.outputs.version }}" --check > drift.txt 2>&1
+          echo "status=$?" >> "$GITHUB_OUTPUT"
+          cat drift.txt
+      - name: Open issue
+        if: steps.report.outputs.status != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Shorebird protocol drift: ${{ steps.latest.outputs.version }}"
+          gh issue list --state open --search "$title in:title" --json number --jq length | grep -q '^0$' || exit 0
+          { echo 'Run `tool/sync_protocol.sh ${{ steps.latest.outputs.version }}` and review:'; echo; echo '```'; head -c 60000 drift.txt; echo '```'; } > body.md
+          gh issue create --title "$title" --body-file body.md

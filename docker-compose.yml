@@ -1,0 +1,55 @@
+# Local stack: Postgres, SeaweedFS (S3-compatible storage), and the server.
+#   docker compose up -d postgres s3   # dependencies only (dev, tests)
+#   docker compose up -d                  # everything
+# Compose project name, so volumes and containers are openbird_*.
+name: openbird
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: openbird
+      POSTGRES_PASSWORD: openbird
+      POSTGRES_DB: openbird
+    ports: ["54329:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openbird"]
+      interval: 2s
+      retries: 30
+
+  # Local S3-compatible storage for STORAGE=s3 (MinIO no longer publishes
+  # public images). Any S3 works in production: AWS S3, R2, GCS (interop), ...
+  s3:
+    image: chrislusf/seaweedfs:3.97
+    command: server -dir=/data -s3 -s3.port=9000 -s3.config=/etc/seaweedfs/s3.json
+    ports: ["9000:9000"]
+    volumes:
+      - s3data:/data
+      - ./deploy/seaweedfs-s3.json:/etc/seaweedfs/s3.json:ro
+
+  server:
+    build: .
+    depends_on:
+      postgres: {condition: service_healthy}
+    environment:
+      DATABASE_URL: postgres://openbird:openbird@postgres:5432/openbird?sslmode=disable
+      MASTER_KEY: ${MASTER_KEY:-}  # required: openssl rand -base64 32
+      STORAGE: ${STORAGE:-fs}
+      STORAGE_DIR: /data/storage
+      STAGING_DIR: /data/staging
+      PUBLIC_URL: ${PUBLIC_URL:-}
+      ALLOW_SIGNUP: ${ALLOW_SIGNUP:-false}
+      S3_ENDPOINT: s3
+      S3_PORT: "9000"
+      S3_USE_SSL: "false"
+      S3_ACCESS_KEY: openbird
+      S3_SECRET_KEY: openbird-secret
+      S3_BUCKET: openbird
+    ports: ["8080:8080"]
+    volumes: [serverdata:/data]
+
+volumes:
+  pgdata:
+  s3data:
+  serverdata:

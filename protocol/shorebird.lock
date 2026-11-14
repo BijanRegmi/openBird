@@ -1,0 +1,6 @@
+# The exact Shorebird sources this server's protocol is pinned to.
+# Change only via tool/sync_protocol.sh, which updates every derived file.
+SHOREBIRD_CLI_VERSION=1.6.140
+SHOREBIRD_CLI_SHA=a7d42977f3620014c683ccde51604492a50aefc4
+FLUTTER_REVISION=6f0092351b8eac9446132ebcafb82fde73f305f7
+UPDATER_SHA=457304351b62f28ffe314fa3767aad432037f12d

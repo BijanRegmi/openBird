@@ -1,0 +1,12 @@
+.tools/
+.dart_tool/
+build/
+.env
+data/
+*.log
+data-server.log
+e2e/*.log
+
+# Dashboard
+node_modules/
+dashboard/dist/

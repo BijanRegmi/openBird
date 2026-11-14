@@ -1,0 +1,9 @@
+{
+  "identities": [
+    {
+      "name": "openbird",
+      "credentials": [{"accessKey": "openbird", "secretKey": "openbird-secret"}],
+      "actions": ["Admin", "Read", "List", "Tagging", "Write"]
+    }
+  ]
+}

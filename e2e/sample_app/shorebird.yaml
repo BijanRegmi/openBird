@@ -1,0 +1,4 @@
+# e2e/run.sh replaces this file on every run (shorebird init against your
+# server, then base_url). The values below are placeholders.
+app_id: 00000000-0000-4000-8000-000000000000
+base_url: http://localhost:8080

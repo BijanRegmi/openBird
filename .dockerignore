@@ -1,0 +1,9 @@
+**/node_modules
+**/.dart_tool
+**/build
+dashboard/dist
+.tools
+data
+e2e
+*.log
+.env
