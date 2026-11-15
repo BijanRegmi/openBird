@@ -46,7 +46,10 @@ class Config {
         bucket: require('S3_BUCKET'),
         region: env['S3_REGION'],
       ),
-      _ => throw StateError('STORAGE must be fs or s3, not $storageKind'),
+      'azure' => AzureBlobStorageConfig.fromEnvironment(env),
+      _ => throw StateError(
+        'STORAGE must be fs, s3 or azure, not $storageKind',
+      ),
     };
     final publicUrl = env['PUBLIC_URL'];
     return Config(
@@ -126,4 +129,120 @@ class S3StorageConfig extends StorageConfig {
   final String secretKey;
   final String bucket;
   final String? region;
+}
+
+/// Azure Blob Storage, authenticated with the storage account's shared key.
+/// [endpoint] is the blob service URL (`https://<account>.blob.core.windows.net`
+/// by default, or Azurite's `http://127.0.0.1:10000/devstoreaccount1`).
+class AzureBlobStorageConfig extends StorageConfig {
+  AzureBlobStorageConfig({
+    required this.accountName,
+    required this.accountKey,
+    required this.container,
+    Uri? endpoint,
+    this.publicEndpoint,
+  }) : endpoint =
+           endpoint ?? Uri.parse('https://$accountName.blob.core.windows.net');
+
+  /// From `AZURE_STORAGE_CONNECTION_STRING`, or `AZURE_STORAGE_ACCOUNT` and
+  /// `AZURE_STORAGE_KEY` (plus an optional `AZURE_STORAGE_ENDPOINT`).
+  factory AzureBlobStorageConfig.fromEnvironment(Map<String, String> env) {
+    String? get(String name) {
+      final value = env[name];
+      return value == null || value.isEmpty ? null : value;
+    }
+
+    final container = get('AZURE_STORAGE_CONTAINER') ?? 'openbird';
+    final publicEndpoint = get('AZURE_STORAGE_PUBLIC_ENDPOINT');
+    final connectionString = get('AZURE_STORAGE_CONNECTION_STRING');
+    if (connectionString != null) {
+      return AzureBlobStorageConfig.fromConnectionString(
+        connectionString,
+        container: container,
+        publicEndpoint: publicEndpoint == null
+            ? null
+            : Uri.parse(publicEndpoint),
+      );
+    }
+    final account = get('AZURE_STORAGE_ACCOUNT');
+    final key = get('AZURE_STORAGE_KEY');
+    if (account == null || key == null) {
+      throw StateError(
+        'STORAGE=azure needs AZURE_STORAGE_CONNECTION_STRING, or '
+        'AZURE_STORAGE_ACCOUNT and AZURE_STORAGE_KEY',
+      );
+    }
+    final endpoint = get('AZURE_STORAGE_ENDPOINT');
+    return AzureBlobStorageConfig(
+      accountName: account,
+      accountKey: key,
+      container: container,
+      endpoint: endpoint == null ? null : Uri.parse(endpoint),
+      publicEndpoint: publicEndpoint == null ? null : Uri.parse(publicEndpoint),
+    );
+  }
+
+  /// Parses a storage account connection string as the Azure portal shows
+  /// it, including `UseDevelopmentStorage=true` for Azurite.
+  factory AzureBlobStorageConfig.fromConnectionString(
+    String connectionString, {
+    required String container,
+    Uri? publicEndpoint,
+  }) {
+    final parts = <String, String>{};
+    for (final part in connectionString.split(';')) {
+      final eq = part.indexOf('=');
+      if (eq <= 0) continue;
+      parts[part.substring(0, eq).trim().toLowerCase()] = part
+          .substring(eq + 1)
+          .trim();
+    }
+    if (parts['usedevelopmentstorage'] == 'true') {
+      return AzureBlobStorageConfig(
+        accountName: azuriteAccount,
+        accountKey: azuriteKey,
+        container: container,
+        endpoint: Uri.parse(
+          parts['developmentstorageproxyuri'] ??
+              'http://127.0.0.1:10000/$azuriteAccount',
+        ),
+        publicEndpoint: publicEndpoint,
+      );
+    }
+    final account = parts['accountname'];
+    final key = parts['accountkey'];
+    if (account == null || key == null) {
+      throw StateError(
+        'AZURE_STORAGE_CONNECTION_STRING needs AccountName and AccountKey '
+        '(SAS-only connection strings are not supported)',
+      );
+    }
+    final blobEndpoint = parts['blobendpoint'];
+    final protocol = parts['defaultendpointsprotocol'] ?? 'https';
+    final suffix = parts['endpointsuffix'] ?? 'core.windows.net';
+    return AzureBlobStorageConfig(
+      accountName: account,
+      accountKey: key,
+      container: container,
+      endpoint: Uri.parse(blobEndpoint ?? '$protocol://$account.blob.$suffix'),
+      publicEndpoint: publicEndpoint,
+    );
+  }
+
+  /// Azurite's well-known development account.
+  static const azuriteAccount = 'devstoreaccount1';
+  static const azuriteKey =
+      'Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==';
+
+  final String accountName;
+
+  /// The account key, base64 as the portal shows it.
+  final String accountKey;
+  final String container;
+  final Uri endpoint;
+
+  /// The blob service URL clients download from, when it differs from
+  /// [endpoint] (e.g. the server reaches Azurite as `azurite:10000` inside
+  /// docker compose, devices as `localhost:10000`).
+  final Uri? publicEndpoint;
 }

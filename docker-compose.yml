@@ -1,5 +1,6 @@
-# Local stack: Postgres, SeaweedFS (S3-compatible storage), and the server.
-#   docker compose up -d postgres s3   # dependencies only (dev, tests)
+# Local stack: Postgres, SeaweedFS (S3-compatible storage), Azurite (Azure
+# Blob Storage emulator), and the server.
+#   docker compose up -d postgres s3 azurite   # dependencies only (dev, tests)
 #   docker compose up -d                  # everything
 # Compose project name, so volumes and containers are openbird_*.
 name: openbird
@@ -28,6 +29,13 @@ services:
       - s3data:/data
       - ./deploy/seaweedfs-s3.json:/etc/seaweedfs/s3.json:ro
 
+  # Local Azure Blob Storage for STORAGE=azure.
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:3.35.0
+    command: azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --location /data --skipApiVersionCheck
+    ports: ["10000:10000"]
+    volumes: [azuritedata:/data]
+
   server:
     build: .
     depends_on:
@@ -46,10 +54,15 @@ services:
       S3_ACCESS_KEY: openbird
       S3_SECRET_KEY: openbird-secret
       S3_BUCKET: openbird
+      AZURE_STORAGE_CONNECTION_STRING: ${AZURE_STORAGE_CONNECTION_STRING:-UseDevelopmentStorage=true;DevelopmentStorageProxyUri=http://azurite:10000/devstoreaccount1}
+      AZURE_STORAGE_CONTAINER: ${AZURE_STORAGE_CONTAINER:-openbird}
+      # With Azurite, set this to http://<host reachable by devices>:10000/devstoreaccount1.
+      AZURE_STORAGE_PUBLIC_ENDPOINT: ${AZURE_STORAGE_PUBLIC_ENDPOINT:-}
     ports: ["8080:8080"]
     volumes: [serverdata:/data]
 
 volumes:
   pgdata:
   s3data:
+  azuritedata:
   serverdata:

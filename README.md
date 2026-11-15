@@ -88,6 +88,29 @@ shorebird patches rollback --release-version 1.0.0+1 --patch-number 1
 `base_url` in `shorebird.yaml` points both the CLI and every installed app at
 this server. It's baked into the release, so pick a URL you'll keep.
 
+## Storage
+
+Artifacts go to one of three backends, picked with `STORAGE` (see
+[`.env.example`](.env.example) for every setting):
+
+| `STORAGE` | Where | Downloads |
+|---|---|---|
+| `fs` (default) | A local directory (`STORAGE_DIR`) | Served by the server through HMAC-signed, expiring URLs |
+| `s3` | Any S3-compatible store: AWS S3, Cloudflare R2, GCS interop, SeaweedFS, ... | Presigned GETs |
+| `azure` | Azure Blob Storage (or Azurite) | Read-only, single-blob SAS URLs |
+
+Each backend is an adapter behind one interface (`server/lib/src/storage.dart`).
+Uploads always pass through the server; devices and the CLI download
+straight from the store, with Range support for resumed downloads.
+
+For Azure, give a connection string or an account name and key:
+
+```sh
+STORAGE=azure
+AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=https;AccountName=…;AccountKey=…;EndpointSuffix=core.windows.net"
+AZURE_STORAGE_CONTAINER=openbird   # created on startup if missing
+```
+
 ## Develop
 
 ```sh
@@ -110,7 +133,7 @@ never touched.
 | `protocol/` | The pinned Shorebird contract and how each operation is handled |
 | `tool/` | Dev scripts, admin CLI wrapper, protocol sync, demo seed |
 | `e2e/` | End-to-end test: real CLI, real Flutter app, emulator |
-| `deploy/` | Config for the local S3-compatible store |
+| `deploy/` | Config for the local S3-compatible store (docker compose) |
 
 ## Contributing and security
 

@@ -6,7 +6,8 @@ import 'package:logging/logging.dart';
 import 'package:shelf/shelf_io.dart' as io;
 
 /// A server on an ephemeral port over a fresh TEST_DATABASE_URL schema, with
-/// one user (in a personal organization) and their API key.
+/// one user (in a personal organization) and their API key. Artifacts go to
+/// a temporary directory, or to Azurite with TEST_STORAGE=azure.
 class TestServer {
   TestServer._(this._http, this.db, this.dir, this.apiKey, this.orgId);
 
@@ -30,7 +31,13 @@ class TestServer {
       port: 0,
       databaseUrl: url,
       masterKey: randomBytes(32),
-      storage: FsStorageConfig('${dir.path}/storage'),
+      // TEST_STORAGE=azure runs every server test on Azurite.
+      storage: Platform.environment['TEST_STORAGE'] == 'azure'
+          ? AzureBlobStorageConfig.fromConnectionString(
+              'UseDevelopmentStorage=true',
+              container: 'openbird-server-test',
+            )
+          : FsStorageConfig('${dir.path}/storage'),
       stagingDir: '${dir.path}/staging',
     );
     final services = Services(

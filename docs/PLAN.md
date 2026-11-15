@@ -34,9 +34,9 @@ No Shorebird account, auth service, API, console or CDN is involved.
  shorebird CLI ──HTTPS /api/v1──▶ ┌─────────────────────┐ ──▶ Postgres
  (SHOREBIRD_TOKEN=sb_api_…)        │  openbird_server    │
                                    │  (Dart, shelf)      │ ──▶ Object storage
- device updater ──/patches/check─▶ │                     │     (fs | S3/MinIO)
+ device updater ──/patches/check─▶ │                     │     (fs | S3 | Azure Blob)
                  ──/patches/events▶└─────────────────────┘
-                 ──GET patch──────▶ signed URL (server /files or S3 presigned)
+                 ──GET patch──────▶ signed URL (server /files, S3 presigned, Azure SAS)
 ```
 
 * **Language: Dart.** The server imports `shorebird_code_push_protocol`
@@ -44,9 +44,11 @@ No Shorebird account, auth service, API, console or CDN is involved.
   generated classes the CLI parses. Bumping the pin turns protocol drift into
   compile errors and failing tests.
 * **Postgres** for state. Plain SQL migrations in `server/migrations`.
-* **Storage interface** with two backends: `fs` (served by the server with
-  HMAC-signed, expiring URLs and Range support) and `s3` (any S3-compatible
-  store, with presigned GETs). Uploads always enter through the server
+* **Storage interface** with one adapter per backend (`lib/src/storage/`):
+  `fs` (served by the server with HMAC-signed, expiring URLs and Range
+  support), `s3` (any S3-compatible store, with presigned GETs) and `azure`
+  (Azure Blob Storage over its REST API, Shared Key auth, read-only SAS
+  downloads). Uploads always enter through the server
   (upload-session URLs), because neither CLI upload method is S3-native.
 * **Auth:** API keys (`sb_api_…`). Only the SHA-256 is stored. Users,
   personal orgs and keys are bootstrapped with `bin/admin.dart`.

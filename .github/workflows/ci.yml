@@ -16,6 +16,9 @@ jobs:
         ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U openbird" --health-interval 2s --health-retries 30
+      azurite:
+        image: mcr.microsoft.com/azure-storage/azurite:3.35.0
+        ports: ["10000:10000"]
     defaults:
       run:
         working-directory: server
@@ -30,6 +33,8 @@ jobs:
       - run: dart format --output=none --set-exit-if-changed lib bin test
       - run: dart analyze --fatal-infos
       - run: dart test
+      # Every server test again, with artifacts in Azure Blob Storage.
+      - run: TEST_STORAGE=azure dart test
 
   console:
     runs-on: ubuntu-latest
